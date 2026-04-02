@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MT-AHNet | Weed Detection Research</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0e0a;
+    --bg2: #0f1a0f;
+    --bg3: #111f11;
+    --green: #4ade80;
+    --green2: #22c55e;
+    --green3: #16a34a;
+    --accent: #a3e635;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --text: #e8f5e9;
+    --muted: #6b7a6b;
+    --card: #111811;
+    --border: #1e3a1e;
+    --mono: 'Space Mono', monospace;
+    --display: 'Syne', sans-serif;
+    --body: 'DM Sans', sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);overflow-x:hidden;line-height:1.6}
+
+  /* ─── NAV ─── */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,10,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem}
+  .nav-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+  .nav-logo{font-family:var(--mono);font-size:.85rem;color:var(--green);letter-spacing:2px}
+  .nav-links{display:flex;gap:1.5rem}
+  .nav-links a{font-family:var(--mono);font-size:.75rem;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color .2s}
+  .nav-links a:hover{color:var(--green)}
+
+  /* ─── HERO ─── */
+  .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:6rem 2rem 4rem}
+  .hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.4}
+  .hero-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(74,222,128,0.08) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+  .hero-tag{font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:3px;border:1px solid var(--green3);padding:.3rem .8rem;border-radius:2px;margin-bottom:2rem;display:inline-block}
+  .hero-title{font-family:var(--display);font-size:clamp(2.5rem,6vw,5rem);font-weight:800;line-height:1.05;text-align:center;max-width:900px;position:relative;z-index:1}
+  .hero-title .hl{color:var(--green)}
+  .hero-sub{font-size:1.1rem;color:#94a394;max-width:600px;text-align:center;margin:1.5rem auto 0;position:relative;z-index:1}
+  .hero-stats{display:flex;gap:2rem;margin-top:3rem;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+  .hstat{text-align:center;background:rgba(74,222,128,0.05);border:1px solid var(--border);padding:1rem 1.5rem;border-radius:4px;min-width:120px}
+  .hstat-val{font-family:var(--mono);font-size:1.8rem;color:var(--green);font-weight:700}
+  .hstat-lbl{font-size:.75rem;color:var(--muted);margin-top:.3rem;letter-spacing:1px}
+  .scroll-hint{margin-top:3rem;font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:2px;animation:pulse 2s infinite;position:relative;z-index:1}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* ─── SECTIONS ─── */
+  section{padding:5rem 2rem;max-width:1200px;margin:auto}
+  .section-label{font-family:var(--mono);font-size:.7rem;color:var(--green);letter-spacing:3px;margin-bottom:.5rem}
+  .section-title{font-family:var(--display);font-size:clamp(1.8rem,3vw,2.8rem);font-weight:700;margin-bottom:1rem}
+  .section-title .hl{color:var(--green)}
+  .section-body{color:#94a394;max-width:800px;font-size:1rem;line-height:1.8}
+
+  /* ─── DIVIDER ─── */
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 2rem}
+
+  /* ─── WHY PREPROCESSED ─── */
+  .why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:2.5rem}
+  .why-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.5rem;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+  .why-card:hover{border-color:var(--green3);transform:translateY(-3px)}
+  .why-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--green)}
+  .why-num{font-family:var(--mono);font-size:2rem;color:rgba(74,222,128,0.15);font-weight:700;line-height:1}
+  .why-title{font-family:var(--display);font-weight:700;font-size:1.1rem;margin:.5rem 0;color:var(--green)}
+  .why-desc{font-size:.9rem;color:#94a394;line-height:1.7}
+
+  /* ─── ARCHITECTURE ─── */
+  .arch-container{margin-top:2.5rem}
+  .arch-diagram{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;overflow-x:auto}
+  .arch-flow{display:flex;align-items:center;gap:0;flex-wrap:nowrap;min-width:900px}
+  .arch-block{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+  .arch-box{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:.7rem 1rem;text-align:center;font-size:.8rem;font-family:var(--mono);color:var(--text);min-width:110px;position:relative;transition:all .3s}
+  .arch-box:hover{border-color:var(--green);color:var(--green)}
+  .arch-box.encoder{border-color:#3b82f6;color:#60a5fa}
+  .arch-box.bottleneck{border-color:var(--amber);color:var(--amber);background:rgba(251,191,36,0.05)}
+  .arch-box.decoder{border-color:#a78bfa;color:#a78bfa}
+  .arch-box.attention{border-color:var(--green);color:var(--green);background:rgba(74,222,128,0.05)}
+  .arch-box.head-seg{border-color:var(--accent);color:var(--accent)}
+  .arch-box.head-den{border-color:var(--red);color:var(--red)}
+  .arch-box.output{border-color:var(--green2);color:var(--green2);background:rgba(34,197,94,0.05)}
+  .arch-label{font-size:.65rem;color:var(--muted);font-family:var(--mono);text-align:center;max-width:110px}
+  .arch-arrow{font-size:1.2rem;color:var(--border);padding:0 .3rem;flex-shrink:0}
+  .arch-skip{display:flex;flex-direction:column;align-items:center;gap:.2rem;margin:0 .3rem}
+  .skip-line{width:2px;height:30px;background:var(--green3);opacity:.5}
+  .skip-dot{width:8px;height:8px;border-radius:50%;background:var(--green);opacity:.7}
+  .arch-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.5rem}
+  .atag{font-family:var(--mono);font-size:.7rem;padding:.25rem .6rem;border-radius:2px;border:1px solid}
+  .atag.blue{border-color:#3b82f6;color:#60a5fa;background:rgba(59,130,246,0.05)}
+  .atag.amber{border-color:var(--amber);color:var(--amber);background:rgba(251,191,36,0.05)}
+  .atag.purple{border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,0.05)}
+  .atag.green{border-color:var(--green3);color:var(--green);background:rgba(74,222,128,0.05)}
+  .atag.red{border-color:var(--red);color:var(--red);background:rgba(248,113,113,0.05)}
+
+  /* ─── METHODOLOGY ─── */
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin-top:2.5rem}
+  .method-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.5rem;transition:all .3s}
+  .method-card:hover{border-color:var(--green3)}
+  .method-icon{font-size:1.5rem;margin-bottom:.7rem}
+  .method-name{font-family:var(--display);font-weight:700;font-size:1rem;color:var(--green);margin-bottom:.5rem}
+  .method-desc{font-size:.875rem;color:#94a394;line-height:1.7}
+  .method-code{font-family:var(--mono);font-size:.75rem;color:var(--accent);background:rgba(163,230,53,0.05);border:1px solid rgba(163,230,53,0.2);padding:.4rem .7rem;border-radius:3px;margin-top:.7rem;display:inline-block}
+
+  /* ─── LOSS FUNCTION ─── */
+  .loss-block{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;margin-top:2.5rem}
+  .loss-formula{font-family:var(--mono);font-size:1rem;color:var(--accent);background:rgba(163,230,53,0.05);padding:1.2rem 1.5rem;border-left:3px solid var(--accent);margin:1rem 0;border-radius:0 4px 4px 0;overflow-x:auto;white-space:nowrap}
+  .loss-row{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:1.5rem}
+  .loss-item{flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1rem}
+  .loss-name{font-family:var(--mono);font-size:.8rem;color:var(--amber);margin-bottom:.4rem}
+  .loss-val{font-size:.85rem;color:#94a394}
+  .loss-weight{font-family:var(--mono);font-size:1.1rem;color:var(--green);font-weight:700}
+
+  /* ─── RESULTS ─── */
+  .results-table{width:100%;border-collapse:collapse;margin-top:2rem;overflow:hidden;border-radius:6px;border:1px solid var(--border)}
+  .results-table th{background:var(--bg3);font-family:var(--mono);font-size:.75rem;color:var(--muted);letter-spacing:1px;padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--border)}
+  .results-table td{padding:.8rem 1rem;font-size:.875rem;border-bottom:1px solid var(--border);transition:background .2s}
+  .results-table tr:hover td{background:rgba(74,222,128,0.03)}
+  .results-table tr.winner td{color:var(--green);font-family:var(--mono);font-weight:700}
+  .results-table tr.winner td:first-child{color:var(--text)}
+  .badge{font-family:var(--mono);font-size:.7rem;background:rgba(74,222,128,0.1);color:var(--green);border:1px solid var(--green3);padding:.15rem .4rem;border-radius:2px;margin-left:.5rem}
+
+  /* ─── PER CLASS ─── */
+  .class-bars{margin-top:2rem;display:flex;flex-direction:column;gap:1rem}
+  .class-bar-row{display:grid;grid-template-columns:140px 1fr 60px;align-items:center;gap:1rem}
+  .class-bar-name{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+  .bar-track{background:rgba(255,255,255,0.05);border-radius:2px;height:10px;position:relative;overflow:hidden}
+  .bar-fill{height:100%;border-radius:2px;position:relative;transition:width 1s ease}
+  .bar-val{font-family:var(--mono);font-size:.8rem;color:var(--text);text-align:right}
+
+  /* ─── DENSITY ─── */
+  .density-cards{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem}
+  .den-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.5rem}
+  .den-cls{font-family:var(--mono);font-size:.75rem;color:var(--muted);letter-spacing:1px;margin-bottom:1rem}
+  .den-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem}
+  .den-m{text-align:center}
+  .den-mv{font-family:var(--mono);font-size:1.2rem;font-weight:700}
+  .den-ml{font-size:.7rem;color:var(--muted);margin-top:.2rem}
+  .den-note{font-size:.8rem;color:#6b8a6b;margin-top:1rem;font-style:italic;border-top:1px solid var(--border);padding-top:.8rem}
+
+  /* ─── GA ─── */
+  .ga-section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;margin-top:2.5rem}
+  .ga-params{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem}
+  .ga-param{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:.7rem 1rem;font-size:.85rem}
+  .ga-param span{font-family:var(--mono);color:var(--green)}
+  .ga-result{margin-top:1.5rem;background:rgba(74,222,128,0.05);border:1px solid var(--green3);border-radius:4px;padding:1rem;font-family:var(--mono);font-size:.85rem;color:var(--green)}
+
+  /* ─── TRAINING ─── */
+  .training-phases{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem}
+  .phase-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.5rem;position:relative;overflow:hidden}
+  .phase-card::after{content:attr(data-phase);position:absolute;right:-10px;top:-10px;font-family:var(--display);font-size:5rem;font-weight:800;color:rgba(74,222,128,0.04);line-height:1}
+  .phase-num{font-family:var(--mono);font-size:.7rem;color:var(--green);letter-spacing:2px;margin-bottom:.5rem}
+  .phase-title{font-family:var(--display);font-weight:700;font-size:1.1rem;margin-bottom:.8rem}
+  .phase-desc{font-size:.875rem;color:#94a394;line-height:1.7}
+
+  /* ─── ECONOMIC ─── */
+  .eco-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:2rem}
+  .eco-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.5rem;text-align:center}
+  .eco-val{font-family:var(--display);font-size:2rem;font-weight:800;color:var(--green)}
+  .eco-lbl{font-size:.85rem;color:#94a394;margin-top:.5rem;line-height:1.5}
+  .eco-formula{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1rem;font-family:var(--mono);font-size:.8rem;color:var(--amber);margin-top:1.5rem;text-align:center}
+
+  /* ─── CONCLUSION ─── */
+  .conclusion-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-top:2rem}
+  .con-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.5rem}
+  .con-icon{font-size:1.5rem;margin-bottom:.8rem}
+  .con-title{font-family:var(--display);font-weight:700;color:var(--green);margin-bottom:.5rem}
+  .con-desc{font-size:.875rem;color:#94a394;line-height:1.7}
+
+  /* ─── FUTURE ─── */
+  .future-list{margin-top:2rem;display:flex;flex-direction:column;gap:1rem}
+  .future-item{display:flex;align-items:flex-start;gap:1rem;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.2rem}
+  .future-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:.35rem;flex-shrink:0}
+  .future-content{font-size:.9rem;color:#94a394;line-height:1.7}
+  .future-content strong{color:var(--text);font-family:var(--display);font-size:1rem}
+
+  /* ─── FOOTER ─── */
+  footer{text-align:center;padding:3rem 2rem;border-top:1px solid var(--border);font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+  footer .team{color:var(--green);margin-bottom:.5rem;font-size:.85rem}
+
+  /* ─── DATASET SECTION ─── */
+  .dataset-highlight{background:linear-gradient(135deg,rgba(74,222,128,0.05),rgba(34,197,94,0.02));border:1px solid var(--green3);border-radius:8px;padding:2rem;margin-top:2.5rem}
+  .ds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1.5rem}
+  .ds-class{text-align:center;padding:1rem;background:var(--bg3);border-radius:4px;border:1px solid var(--border)}
+  .ds-count{font-family:var(--mono);font-size:1.4rem;font-weight:700}
+  .ds-name{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+  .ds-pct{font-family:var(--mono);font-size:.75rem;margin-top:.2rem}
+  .ds-why{margin-top:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .ds-why-item{font-size:.875rem;color:#94a394;padding:.8rem 1rem;background:var(--bg3);border-radius:4px;border-left:3px solid var(--green)}
+
+  /* ─── CODE SNIPPET ─── */
+  .code-block{background:#0d0f0d;border:1px solid var(--border);border-radius:6px;padding:1.5rem;font-family:var(--mono);font-size:.8rem;line-height:1.8;overflow-x:auto;margin-top:1.5rem;color:#94a394}
+  .code-block .kw{color:#7dd3fc}
+  .code-block .fn{color:var(--green)}
+  .code-block .str{color:#fca5a5}
+  .code-block .num{color:var(--amber)}
+  .code-block .cm{color:#4b5563;font-style:italic}
+
+  @media(max-width:768px){
+    .arch-flow{min-width:700px}
+    .density-cards{grid-template-columns:1fr}
+    .training-phases{grid-template-columns:1fr}
+    .ds-grid{grid-template-columns:1fr 1fr}
+    .ds-why{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">MT-AHNET // SRMIST</div>
+    <div class="nav-links">
+      <a href="#why">Dataset</a>
+      <a href="#arch">Architecture</a>
+      <a href="#method">Methodology</a>
+      <a href="#results">Results</a>
+      <a href="#conclusion">Conclusion</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-tag">MINOR RESEARCH PROJECT · SRMIST · 21CSP302L</div>
+  <h1 class="hero-title">
+    <span class="hl">MT-AHNet</span><br/>
+    Multi-Task Attention-Augmented<br/>Hybrid Network
+  </h1>
+  <p class="hero-sub">
+    Integrated Weed-Crop Segmentation &amp; Density Estimation in Soybean Fields — the first unified framework to tackle both tasks simultaneously on the Ferreira benchmark.
+  </p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-val">95.63%</div><div class="hstat-lbl">mIoU</div></div>
+    <div class="hstat"><div class="hstat-val">99.21%</div><div class="hstat-lbl">Accuracy</div></div>
+    <div class="hstat"><div class="hstat-val">97.85%</div><div class="hstat-lbl">F1-Score</div></div>
+    <div class="hstat"><div class="hstat-val">3.1%</div><div class="hstat-lbl">MAE (Grass)</div></div>
+    <div class="hstat"><div class="hstat-val">4.7%</div><div class="hstat-lbl">MAE (Broadleaf)</div></div>
+  </div>
+  <div class="scroll-hint">↓ SCROLL TO EXPLORE ↓</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─── PROBLEM STATEMENT ─── -->
+<section id="problem">
+  <div class="section-label">// 01 · PROBLEM STATEMENT</div>
+  <h2 class="section-title">Why Does <span class="hl">Weed Detection</span> Matter?</h2>
+  <p class="section-body">
+    Soybean is a globally critical crop. Uncontrolled weed growth causes <strong style="color:var(--amber)">15–50% yield losses</strong>. 
+    Traditional blanket herbicide spraying is both economically wasteful and environmentally damaging.
+    Site-Specific Weed Management (SSWM) requires a system that can simultaneously:
+  </p>
+  <div class="why-grid" style="margin-top:1.5rem">
+    <div class="why-card">
+      <div class="why-num">01</div>
+      <div class="why-title">Identify Weed Species</div>
+      <div class="why-desc">Grass weeds (monocots) require graminicides; broadleaf weeds need entirely different herbicide formulations. Misclassification = wrong chemical = zero effect.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-num">02</div>
+      <div class="why-title">Localize Spatially</div>
+      <div class="why-desc">Pixel-level segmentation maps tell a drone or tractor exactly where weeds are — enabling targeted spraying only where needed.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-num">03</div>
+      <div class="why-title">Quantify Density</div>
+      <div class="why-desc">Density estimation reveals infestation intensity per zone. Areas with &gt;20% coverage trigger intervention; below threshold areas are left untreated.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-num">04</div>
+      <div class="why-title">Do It in One Pass</div>
+      <div class="why-desc">No prior work combined all three on the Ferreira benchmark. MT-AHNet does it in a single forward pass — no separate models, no extra annotation.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── WHY PREPROCESSED DATASET ─── -->
+<section id="why">
+  <div class="section-label">// 02 · DATASET & PREPROCESSING RATIONALE</div>
+  <h2 class="section-title">Why We Used the <span class="hl">Preprocessed</span> SLIC Dataset</h2>
+  <p class="section-body">
+    The Kaggle dataset (<strong style="color:var(--text)">fpeccia/weed-detection-in-soybean-crops</strong>) is not raw UAV imagery — it is already SLIC (Simple Linear Iterative Clustering) superpixel-segmented and manually annotated by agricultural experts. This is a deliberate and strategic choice that significantly <strong style="color:var(--green)">enhances our research quality</strong>.
+  </p>
+
+  <div class="dataset-highlight">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">DATASET COMPOSITION</div>
+    <div class="ds-grid">
+      <div class="ds-class">
+        <div class="ds-count" style="color:#60a5fa">7,376</div>
+        <div class="ds-name">Soybean</div>
+        <div class="ds-pct" style="color:#60a5fa">48.1%</div>
+      </div>
+      <div class="ds-class">
+        <div class="ds-count" style="color:#94a3b8">3,249</div>
+        <div class="ds-name">Soil</div>
+        <div class="ds-pct" style="color:#94a3b8">21.2%</div>
+      </div>
+      <div class="ds-class">
+        <div class="ds-count" style="color:var(--green)">3,520</div>
+        <div class="ds-name">Grass Weed</div>
+        <div class="ds-pct" style="color:var(--green)">23.0%</div>
+      </div>
+      <div class="ds-class">
+        <div class="ds-count" style="color:var(--amber)">1,191</div>
+        <div class="ds-name">Broadleaf Weed</div>
+        <div class="ds-pct" style="color:var(--amber)">7.8%</div>
+      </div>
+    </div>
+
+    <div style="margin-top:1.5rem;font-family:var(--mono);font-size:.75rem;color:var(--muted)">WHY SLIC-PREPROCESSED DATA STRENGTHENS OUR RESEARCH</div>
+    <div class="ds-why">
+      <div class="ds-why-item"><strong style="color:var(--text)">Expert-quality labels:</strong> Agricultural domain experts manually annotated each SLIC superpixel — eliminating noisy, ambiguous pixel-level labels that plague raw UAV datasets. This gives our model the cleanest possible supervision signal.</div>
+      <div class="ds-why-item"><strong style="color:var(--text)">Perceptually meaningful units:</strong> SLIC groups pixels into visually coherent regions that respect natural boundaries. Our model learns from plant-biologically meaningful segments, not arbitrary pixels.</div>
+      <div class="ds-why-item"><strong style="color:var(--text)">Established benchmark:</strong> Using the Ferreira et al. [3] dataset makes our results directly comparable with prior works (Razfar, Panati, Gopalakrishnan) — enabling fair, reproducible evaluation.</div>
+      <div class="ds-why-item"><strong style="color:var(--text)">Density supervision for free:</strong> Since labels are per-segment, we derive ground-truth weed density as (weed pixel count / total segment area) — no extra annotation cost needed for our regression branch.</div>
+      <div class="ds-why-item"><strong style="color:var(--text)">Reduces domain noise:</strong> Raw UAV imagery contains motion blur, lighting variation, and altitude differences. Superpixel preprocessing normalizes these effects before they reach our model.</div>
+      <div class="ds-why-item"><strong style="color:var(--text)">Standard 150×150 resolution:</strong> The preprocessing fixes image segments to a consistent 150×150px resolution, enabling fair batch processing and direct architectural comparison across all baseline models.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── ARCHITECTURE ─── -->
+<section id="arch">
+  <div class="section-label">// 03 · ARCHITECTURE</div>
+  <h2 class="section-title">MT-AHNet <span class="hl">Architecture</span> Deep Dive</h2>
+  <p class="section-body">
+    MT-AHNet is built on three proven pillars — residual learning, encoder-decoder topology, and attention gating — extended with three novel contributions that make it the first model to unify four-class segmentation and density estimation on this benchmark.
+  </p>
+
+  <div class="arch-container">
+    <div class="arch-diagram">
+      <div style="font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:2px;margin-bottom:1.5rem">DATA FLOW THROUGH MT-AHNET</div>
+      <div class="arch-flow">
+        <!-- Input -->
+        <div class="arch-block">
+          <div class="arch-box" style="border-color:var(--green2);color:var(--green2)">Input Image<br/><span style="font-size:.65rem;opacity:.7">150×150×3</span></div>
+          <div class="arch-label">UAV Segment</div>
+        </div>
+        <div class="arch-arrow">→</div>
+
+        <!-- Encoder -->
+        <div class="arch-block">
+          <div class="arch-box encoder">Encoder E1<br/><span style="font-size:.65rem;opacity:.7">64 filters</span></div>
+          <div class="arch-label">Residual Block</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-block">
+          <div class="arch-box encoder">Encoder E2<br/><span style="font-size:.65rem;opacity:.7">128 filters</span></div>
+          <div class="arch-label">+ MaxPool 2×2</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-block">
+          <div class="arch-box encoder">Encoder E3<br/><span style="font-size:.65rem;opacity:.7">256 filters</span></div>
+          <div class="arch-label">+ MaxPool 2×2</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-block">
+          <div class="arch-box encoder">Encoder E4<br/><span style="font-size:.65rem;opacity:.7">512 filters</span></div>
+          <div class="arch-label">+ MaxPool 2×2</div>
+        </div>
+        <div class="arch-arrow">→</div>
+
+        <!-- Bottleneck -->
+        <div class="arch-block">
+          <div class="arch-box bottleneck">Bottleneck<br/><span style="font-size:.65rem;opacity:.7">1024 filters</span></div>
+          <div class="arch-label">Shared Features</div>
+        </div>
+
+        <!-- Branch split -->
+        <div style="display:flex;flex-direction:column;gap:.5rem;margin-left:.5rem">
+          <div style="display:flex;align-items:center;gap:.3rem">
+            <div style="width:2px;height:30px;background:var(--accent)"></div>
+            <div style="font-family:var(--mono);font-size:.65rem;color:var(--accent)">SEG HEAD</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:.3rem">
+            <div style="width:2px;height:30px;background:var(--red)"></div>
+            <div style="font-family:var(--mono);font-size:.65rem;color:var(--red)">DEN HEAD</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">→</div>
+
+        <!-- Outputs -->
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          <div class="arch-block">
+            <div class="arch-box head-seg">4-Class Mask<br/><span style="font-size:.65rem;opacity:.7">Softmax</span></div>
+            <div class="arch-label">Segmentation</div>
+          </div>
+          <div class="arch-block">
+            <div class="arch-box head-den">Density [0,1]<br/><span style="font-size:.65rem;opacity:.7">GAP → FC → FC</span></div>
+            <div class="arch-label">Weed Coverage</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attention Gates label -->
+      <div style="margin-top:1.5rem;padding:.8rem 1rem;background:rgba(74,222,128,0.05);border:1px solid var(--green3);border-radius:4px;font-size:.85rem;color:#94a394">
+        <span style="font-family:var(--mono);color:var(--green)">⚡ DUAL ATTENTION GATES</span> are applied at every skip connection between encoder Eᵢ and decoder Dᵢ — computing spatial attention coefficients α = σ(Wα · ReLU(Wx·x + Wg·g + b)). This selectively suppresses soil/background noise and highlights crop-weed boundaries.
+      </div>
+
+      <div class="arch-tags">
+        <span class="atag blue">Residual Blocks (E1–E4)</span>
+        <span class="atag amber">Bottleneck 1024ch</span>
+        <span class="atag purple">Transposed Conv Decoder</span>
+        <span class="atag green">Dual Attention Gates</span>
+        <span class="atag red">Density Regression Head</span>
+      </div>
+    </div>
+
+    <!-- Architecture details -->
+    <div class="method-grid" style="margin-top:1.5rem">
+      <div class="method-card">
+        <div class="method-icon">🧱</div>
+        <div class="method-name">Residual Encoder (4 Stages)</div>
+        <div class="method-desc">Each stage: 2× Conv(3×3) → BN → ReLU with identity shortcut connections. Channel progression: 64 → 128 → 256 → 512. Prevents vanishing gradients through depth. MaxPool(2×2) for spatial downsampling.</div>
+        <div class="method-code">He et al. (CVPR 2016)</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">⚡</div>
+        <div class="method-name">Dual Attention Gates</div>
+        <div class="method-desc">Unlike single attention, dual gates operate on both spatial and channel dimensions of skip connections. Gate signal g comes from the decoder; x is the encoder feature. Sigmoid activation produces per-pixel importance weights α ∈ [0,1].</div>
+        <div class="method-code">Additive attention [Vaswani 2017]</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">🔀</div>
+        <div class="method-name">Density Regression Branch</div>
+        <div class="method-desc">Attached to bottleneck features. Global Average Pooling → FC(512, ReLU) → Dropout(30%) → FC(2, Sigmoid). Outputs normalized grass and broadleaf coverage in [0,1]. Ground-truth: pixel_count_class / total_pixels.</div>
+        <div class="method-code">No extra annotation needed</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">🎯</div>
+        <div class="method-name">Segmentation Head</div>
+        <div class="method-desc">1×1 Conv projecting decoder features onto 4 output channels. Pixel-wise Softmax produces class probability maps. Final prediction via argmax. Follows standard FCN / U-Net paradigm adapted for 4-class agricultural segmentation.</div>
+        <div class="method-code">Long et al. (CVPR 2015)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── METHODOLOGY ─── -->
+<section id="method">
+  <div class="section-label">// 04 · METHODOLOGY IN DEPTH</div>
+  <h2 class="section-title">Seven <span class="hl">Methodologies</span> Explained</h2>
+  <p class="section-body">Every design choice in MT-AHNet is driven by a specific research challenge. Here is what we did, why we did it, and what problem each component solves.</p>
+
+  <div class="method-grid">
+    <div class="method-card">
+      <div class="method-icon">🔁</div>
+      <div class="method-name">1. Transfer Learning (EfficientNetB0)</div>
+      <div class="method-desc">The encoder backbone is initialized with ImageNet pretrained weights. This gives the model rich, generalized low-level feature detectors (edges, textures, color gradients) before ever seeing a soybean image. Without this, training from scratch on 10,735 samples would underfit severely. Phase 1 freezes the backbone; Phase 2 fine-tunes all layers jointly.</div>
+      <div class="method-code">Achieves 95%+ baseline accuracy</div>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">👁️</div>
+      <div class="method-name">2. Dual Attention Gates</div>
+      <div class="method-desc">Standard U-Net skip connections blindly copy all encoder features to the decoder — including irrelevant soil background activations. Attention gates learn to suppress these and amplify discriminative crop-weed boundary responses. Dual gates provide independent spatial and channel attention, giving finer feature selectivity than single-gate architectures.</div>
+      <div class="method-code">+2.23% mIoU over 2LUSN baseline</div>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">🔄</div>
+      <div class="method-name">3. Data Augmentation</div>
+      <div class="method-desc">Applied only on training data: horizontal/vertical flipping, random rotations ±30°, brightness ±0.2, contrast ±0.15, hue ±0.05. Minority classes (grass, broadleaf) are oversampled before augmentation. This synthetically expands the training distribution and makes the model robust to UAV viewpoint changes and lighting variation.</div>
+      <div class="method-code">Prevents overfitting on minority classes</div>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">⚖️</div>
+      <div class="method-name">4. Weighted Loss Function</div>
+      <div class="method-desc">The 6.2:1 soybean-to-broadleaf imbalance biases standard cross-entropy toward predicting the majority class. We apply inverse frequency class weights: broadleaf gets ≈6.2× more gradient weight than soybean. This ensures the model is penalized heavily for missing rare weed instances — the most agronomically critical errors.</div>
+      <div class="method-code">Broadleaf recall: 96% (vs ~84% baseline)</div>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">📦</div>
+      <div class="method-name">5. Batch Normalization</div>
+      <div class="method-desc">Applied after every convolutional layer in the residual blocks. Normalizes activations across each batch, reducing internal covariate shift. Allows use of higher learning rates, accelerates convergence, and acts as implicit regularization. Critical for stable training of the deep 4-stage encoder with varied class distributions.</div>
+      <div class="method-code">Inside every residual block: Conv→BN→ReLU</div>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">🎲</div>
+      <div class="method-name">6. Dropout Regularization</div>
+      <div class="method-desc">Applied at p=0.30 specifically in the density regression head's fully connected layers. The density branch is particularly prone to overfitting on the small minority-class segment counts. Dropout forces the network to learn redundant representations of weed coverage patterns, improving generalization to unseen field conditions.</div>
+      <div class="method-code">Density head: FC → Dropout(0.3) → FC</div>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">🔬</div>
+      <div class="method-name">7. Two-Phase Training</div>
+      <div class="method-desc">Phase 1 (epochs 1-10): Freeze encoder backbone. Train only new components — attention gates, density head. This prevents random initialization of new layers from corrupting pretrained feature representations. Phase 2 (epoch 11+): Unfreeze all. Joint fine-tuning with cosine annealing LR (1e-4 → 1e-6) until early stopping at val-mIoU plateau.</div>
+      <div class="method-code">Stable convergence, no gradient interference</div>
+    </div>
+  </div>
+
+  <!-- LOSS FUNCTION -->
+  <div class="loss-block" style="margin-top:3rem">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">COMPOSITE LOSS FUNCTION</div>
+    <div class="loss-formula">L_total = λ₁ · L_seg + λ₂ · L_edge + λ₃ · L_density</div>
+    <div class="loss-formula">         = 1.0 · CE_weighted + 0.4 · ||∇Sobel(ŷ) − ∇Sobel(y)||₁ + 0.3 · MSE(d̂, d)</div>
+
+    <div class="loss-row">
+      <div class="loss-item">
+        <div class="loss-name">λ₁ · L_SEG (Cross-Entropy)</div>
+        <div class="loss-weight">λ₁ = 1.0</div>
+        <div class="loss-val" style="margin-top:.4rem">Class-weighted pixel-wise CE loss. Broadleaf gets ≈6.2× gradient weight. Primary task: ensures accurate 4-class segmentation map.</div>
+      </div>
+      <div class="loss-item">
+        <div class="loss-name">λ₂ · L_EDGE (Sobel Boundary)</div>
+        <div class="loss-weight">λ₂ = 0.4</div>
+        <div class="loss-val" style="margin-top:.4rem">L1 distance between Sobel gradient maps of prediction and ground truth. Penalizes spatial misalignment at class boundaries. Boosts grass weed IoU significantly.</div>
+      </div>
+      <div class="loss-item">
+        <div class="loss-name">λ₃ · L_DENSITY (MSE Regression)</div>
+        <div class="loss-weight">λ₃ = 0.3</div>
+        <div class="loss-val" style="margin-top:.4rem">MSE between predicted and true weed coverage fractions. Auxiliary signal that enhances minority class feature discrimination in the shared encoder.</div>
+      </div>
+    </div>
+
+    <div class="ga-section" style="margin-top:1.5rem">
+      <div style="font-family:var(--mono);font-size:.75rem;color:var(--amber);letter-spacing:2px;margin-bottom:.8rem">🧬 GENETIC ALGORITHM HYPERPARAMETER OPTIMIZATION</div>
+      <p style="font-size:.875rem;color:#94a394;line-height:1.7;margin-bottom:1rem">
+        The weights λ₁, λ₂, λ₃ were NOT hand-tuned. We ran a Genetic Algorithm with 30 candidate solutions over 20 generations, using validation mIoU as the fitness function. This is the objective, automated alternative to subjective grid search.
+      </p>
+      <div class="ga-params">
+        <div class="ga-param">Crossover probability: <span>0.80</span></div>
+        <div class="ga-param">Mutation rate: <span>0.10</span></div>
+        <div class="ga-param">Population size: <span>30</span></div>
+        <div class="ga-param">Generations: <span>20</span></div>
+        <div class="ga-param">Fitness function: <span>val mIoU</span></div>
+      </div>
+      <div class="ga-result">▶ Optimal result: λ₁=1.0, λ₂=0.4, λ₃=0.3 — segmentation as primary objective with meaningful auxiliary task contribution</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── RESULTS ─── -->
+<section id="results">
+  <div class="section-label">// 05 · RESULTS & EVALUATION</div>
+  <h2 class="section-title">Performance <span class="hl">Results</span></h2>
+  <p class="section-body">MT-AHNet was evaluated on a held-out test set of 2,300 samples never seen during training. The model outperforms all five baseline architectures across every metric.</p>
+
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Architecture</th>
+        <th>mIoU (%)</th>
+        <th>Accuracy (%)</th>
+        <th>Precision (%)</th>
+        <th>Recall (%)</th>
+        <th>F1-Score (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>U-Net (Baseline)</td><td>84.40</td><td>93.10</td><td>92.00</td><td>91.80</td><td>91.90</td></tr>
+      <tr><td>SegNet</td><td>87.20</td><td>93.10</td><td>93.50</td><td>92.50</td><td>93.00</td></tr>
+      <tr><td>3LSN</td><td>89.00</td><td>94.80</td><td>94.20</td><td>94.00</td><td>94.10</td></tr>
+      <tr><td>3LUSN</td><td>91.50</td><td>95.60</td><td>95.80</td><td>95.40</td><td>95.60</td></tr>
+      <tr><td>2LUSN (2L-ConvUSN)</td><td>93.40</td><td>97.00</td><td>96.80</td><td>96.60</td><td>96.70</td></tr>
+      <tr class="winner">
+        <td>MT-AHNet <span class="badge">PROPOSED</span></td>
+        <td>95.63</td><td>99.21</td><td>98.30</td><td>98.80</td><td>97.85</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Per-Class IoU -->
+  <div style="margin-top:3rem">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">PER-CLASS IoU ANALYSIS</div>
+    <div class="class-bars">
+      <div class="class-bar-row">
+        <div class="class-bar-name">Soybean</div>
+        <div class="bar-track"><div class="bar-fill" style="width:98.1%;background:#60a5fa"></div></div>
+        <div class="bar-val">98.1%</div>
+      </div>
+      <div class="class-bar-row">
+        <div class="class-bar-name">Soil</div>
+        <div class="bar-track"><div class="bar-fill" style="width:96.2%;background:#94a3b8"></div></div>
+        <div class="bar-val">96.2%</div>
+      </div>
+      <div class="class-bar-row">
+        <div class="class-bar-name">Grass Weed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:94.4%;background:var(--green)"></div></div>
+        <div class="bar-val">94.4%</div>
+      </div>
+      <div class="class-bar-row">
+        <div class="class-bar-name">Broadleaf Weed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:93.8%;background:var(--amber)"></div></div>
+        <div class="bar-val">93.8%</div>
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:var(--muted);margin-top:1rem;font-style:italic">
+      Ranking reflects visual separability and dataset representation. Soybean leads (majority class, stable morphology). Broadleaf lowest but still 93.8% — far exceeding all baselines and the prior best of 84.43%.
+    </p>
+  </div>
+
+  <!-- Confusion Matrix Explanation -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;margin-top:2.5rem">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">CONFUSION MATRIX ANALYSIS (ACC: 99.21% | F1: 97.85%)</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;font-family:var(--mono);font-size:.75rem;max-width:500px">
+      <div style="padding:.5rem;color:var(--muted)"></div>
+      <div style="padding:.5rem;color:var(--muted);text-align:center">Soil</div>
+      <div style="padding:.5rem;color:var(--muted);text-align:center">Soybean</div>
+      <div style="padding:.5rem;color:var(--muted);text-align:center">Grass W</div>
+      <div style="padding:.5rem;color:var(--muted);text-align:center">Broadleaf</div>
+
+      <div style="padding:.5rem;color:var(--muted)">Soil</div>
+      <div style="padding:.5rem;background:rgba(74,222,128,0.15);text-align:center;color:var(--green);border-radius:3px">0.96</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.01</div>
+      <div style="padding:.5rem;background:rgba(248,113,113,0.1);text-align:center;color:var(--red)">0.02</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.01</div>
+
+      <div style="padding:.5rem;color:var(--muted)">Soybean</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.01</div>
+      <div style="padding:.5rem;background:rgba(74,222,128,0.15);text-align:center;color:var(--green);border-radius:3px">0.98</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.01</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.00</div>
+
+      <div style="padding:.5rem;color:var(--muted)">Grass W</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.02</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.01</div>
+      <div style="padding:.5rem;background:rgba(74,222,128,0.15);text-align:center;color:var(--green);border-radius:3px">0.94</div>
+      <div style="padding:.5rem;background:rgba(248,113,113,0.08);text-align:center;color:#fca5a5">0.03</div>
+
+      <div style="padding:.5rem;color:var(--muted)">Broadleaf</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.01</div>
+      <div style="padding:.5rem;background:rgba(255,255,255,0.03);text-align:center">0.00</div>
+      <div style="padding:.5rem;background:rgba(248,113,113,0.08);text-align:center;color:#fca5a5">0.03</div>
+      <div style="padding:.5rem;background:rgba(74,222,128,0.15);text-align:center;color:var(--green);border-radius:3px">0.96</div>
+    </div>
+    <div style="margin-top:1rem;font-size:.875rem;color:#94a394;line-height:1.8">
+      <strong style="color:var(--text)">Key insight:</strong> The 0.03 Broadleaf→Grass confusion is expected — both are visually similar vegetation at early growth stages with overlapping color distributions at 150×150px resolution. The Sobel edge loss was specifically designed to address this. The 0.02 Soil→Grass confusion occurs because sparse grass infiltrations can resemble bare soil patches at superpixel scale.
+    </div>
+  </div>
+
+  <!-- Density Regression -->
+  <div style="margin-top:3rem">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">DENSITY REGRESSION RESULTS</div>
+    <div class="density-cards">
+      <div class="den-card">
+        <div class="den-cls">GRASS WEED DENSITY</div>
+        <div class="den-metrics">
+          <div class="den-m">
+            <div class="den-mv" style="color:var(--green)">3.1%</div>
+            <div class="den-ml">MAE</div>
+          </div>
+          <div class="den-m">
+            <div class="den-mv" style="color:var(--amber)">4.4%</div>
+            <div class="den-ml">RMSE</div>
+          </div>
+          <div class="den-m">
+            <div class="den-mv" style="color:#60a5fa">0.942</div>
+            <div class="den-ml">Pearson r</div>
+          </div>
+        </div>
+        <div class="den-note">Well within the 15–30% agronomic intervention threshold. A field with 20% true coverage would be predicted at 17–23% — above threshold in both cases, triggering correct treatment.</div>
+      </div>
+      <div class="den-card">
+        <div class="den-cls">BROADLEAF WEED DENSITY</div>
+        <div class="den-metrics">
+          <div class="den-m">
+            <div class="den-mv" style="color:var(--amber)">4.7%</div>
+            <div class="den-ml">MAE</div>
+          </div>
+          <div class="den-m">
+            <div class="den-mv" style="color:var(--red)">6.3%</div>
+            <div class="den-ml">RMSE</div>
+          </div>
+          <div class="den-m">
+            <div class="den-mv" style="color:#60a5fa">0.901</div>
+            <div class="den-ml">Pearson r</div>
+          </div>
+        </div>
+        <div class="den-note">Slightly higher error due to lower pixel frequency (7.8% of dataset). Still decision-relevant — classification between above/below intervention threshold is preserved reliably.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── TRAINING DYNAMICS ─── -->
+<section>
+  <div class="section-label">// 06 · TRAINING DYNAMICS</div>
+  <h2 class="section-title">Two-Phase <span class="hl">Training</span> Strategy</h2>
+  <p class="section-body">The training dynamics show a clear inflection point at epoch 10 — the phase transition from frozen-backbone to joint fine-tuning. This deliberate staged approach prevents gradient interference and achieves stable convergence.</p>
+
+  <div class="training-phases">
+    <div class="phase-card" data-phase="1">
+      <div class="phase-num">PHASE 1 · EPOCHS 1–10</div>
+      <div class="phase-title" style="color:#60a5fa">Backbone Frozen — New Layers Train</div>
+      <div class="phase-desc">
+        The pretrained encoder (EfficientNetB0 / RA-UNet backbone) is frozen. Only the newly introduced components train: attention gates, decoder layers, and density regression head.<br/><br/>
+        <strong style="color:var(--text)">Why this matters:</strong> Randomly initialized attention gates would otherwise produce chaotic gradients that corrupt the carefully learned ImageNet features in the encoder. Freezing prevents this catastrophic interference.<br/><br/>
+        Training and validation accuracy rise steadily with a small but consistent gap — confirming stable learning without overfitting.
+      </div>
+    </div>
+    <div class="phase-card" data-phase="2">
+      <div class="phase-num">PHASE 2 · EPOCH 11 ONWARDS</div>
+      <div class="phase-title" style="color:var(--green)">All Layers Unfrozen — Joint Fine-Tuning</div>
+      <div class="phase-desc">
+        All parameters are unfrozen. The entire network fine-tunes jointly with cosine annealing: LR decays from 1×10⁻⁴ to 1×10⁻⁶ over ~60 scheduled epochs.<br/><br/>
+        <strong style="color:var(--text)">Visible inflection:</strong> Accuracy jumps sharply, training loss drops rapidly. The encoder now adapts its feature representations specifically for soybean field segmentation.<br/><br/>
+        Early stopping monitors validation mIoU. Training halted at epoch ~30 (best val checkpoint). The epoch-30 checkpoint is used for all final test evaluations.
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+<span class="cm"># Phase 1: Freeze backbone, train only new components</span>
+<span class="kw">for</span> layer <span class="kw">in</span> backbone.layers:
+    layer.trainable = <span class="num">False</span>
+<span class="cm"># Only attention gates + density head are trainable</span>
+
+<span class="cm"># Phase 2: Unfreeze all layers for joint fine-tuning</span>
+<span class="kw">for</span> layer <span class="kw">in</span> model.layers:
+    layer.trainable = <span class="num">True</span>
+
+model.compile(optimizer=<span class="fn">Adam</span>(lr=<span class="num">1e-4</span>),
+              loss=<span class="str">'composite'</span>,          <span class="cm"># λ1·CE + λ2·Sobel + λ3·MSE</span>
+              lr_schedule=<span class="str">'cosine_decay'</span>)  <span class="cm"># 1e-4 → 1e-6</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── ECONOMIC SIGNIFICANCE ─── -->
+<section>
+  <div class="section-label">// 07 · ECONOMIC & AGRONOMIC IMPACT</div>
+  <h2 class="section-title">Real-World <span class="hl">Economic</span> Significance</h2>
+  <p class="section-body">Technical metrics alone don't justify research. Here we translate detection improvements into concrete agricultural and economic outcomes.</p>
+
+  <div class="eco-formula">Economic Loss = Production × (Yield Loss % / 100) × MSP (Minimum Support Price)</div>
+
+  <div class="eco-grid">
+    <div class="eco-card">
+      <div class="eco-val">15–50%</div>
+      <div class="eco-lbl">Soybean yield loss from uncontrolled weed pressure — one of the highest-impact crops in India</div>
+    </div>
+    <div class="eco-card">
+      <div class="eco-val">96%</div>
+      <div class="eco-lbl">Broadleaf recall in MT-AHNet vs ~84% in best baseline — fewer missed infestations</div>
+    </div>
+    <div class="eco-card">
+      <div class="eco-val">₹4,300</div>
+      <div class="eco-lbl">MSP per quintal for soybean (India). Each missed hectare = significant revenue loss per season</div>
+    </div>
+    <div class="eco-card">
+      <div class="eco-val">10 ha</div>
+      <div class="eco-lbl">In a 100ha farm with 10% prior missed infestation, improved detection triggers timely intervention in all affected zones</div>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;margin-top:2rem">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">PRECISION AGRICULTURE VALUE CHAIN</div>
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem">
+      <div style="padding:.7rem 1rem;background:rgba(74,222,128,0.05);border:1px solid var(--green3);border-radius:4px;text-align:center;color:var(--green)">UAV Capture<br/><span style="color:var(--muted);font-size:.7rem">SLIC superpixels</span></div>
+      <div style="color:var(--muted)">→</div>
+      <div style="padding:.7rem 1rem;background:rgba(74,222,128,0.05);border:1px solid var(--green3);border-radius:4px;text-align:center;color:var(--green)">MT-AHNet<br/><span style="color:var(--muted);font-size:.7rem">Forward pass</span></div>
+      <div style="color:var(--muted)">→</div>
+      <div style="padding:.7rem 1rem;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.3);border-radius:4px;text-align:center;color:var(--amber)">Species Map<br/><span style="color:var(--muted);font-size:.7rem">Grass vs Broadleaf</span></div>
+      <div style="color:var(--muted)">→</div>
+      <div style="padding:.7rem 1rem;background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.3);border-radius:4px;text-align:center;color:var(--red)">Density Map<br/><span style="color:var(--muted);font-size:.7rem">% coverage / zone</span></div>
+      <div style="color:var(--muted)">→</div>
+      <div style="padding:.7rem 1rem;background:rgba(96,165,250,0.05);border:1px solid rgba(96,165,250,0.3);border-radius:4px;text-align:center;color:#60a5fa">VRA System<br/><span style="color:var(--muted);font-size:.7rem">Right herbicide, right zone</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── CONCLUSION ─── -->
+<section id="conclusion">
+  <div class="section-label">// 08 · CONCLUSION</div>
+  <h2 class="section-title">What MT-AHNet <span class="hl">Proved</span></h2>
+  <p class="section-body">MT-AHNet is the first model to demonstrate that a single deep learning architecture can simultaneously perform four-class semantic segmentation AND class-wise density estimation on the Ferreira soybean benchmark — achieving state-of-the-art performance on both tasks.</p>
+
+  <div class="conclusion-grid">
+    <div class="con-card">
+      <div class="con-icon">🏆</div>
+      <div class="con-title">State-of-the-Art Performance</div>
+      <div class="con-desc">95.63% mIoU, 99.21% accuracy, 97.85% F1 — surpassing all six baselines including the nearest competitor (2LUSN) by +2.23% mIoU and +11.23% over the U-Net baseline.</div>
+    </div>
+    <div class="con-card">
+      <div class="con-icon">🔗</div>
+      <div class="con-title">Unified Multi-Task Framework</div>
+      <div class="con-desc">Proved that segmentation and density estimation are not competing objectives — they are complementary. Shared bottleneck features enable both tasks to mutually improve each other through joint optimization.</div>
+    </div>
+    <div class="con-card">
+      <div class="con-icon">🧬</div>
+      <div class="con-title">GA-Optimized Loss Weights</div>
+      <div class="con-desc">Demonstrated that automated evolutionary hyperparameter optimization produces superior and objective results compared to manual tuning — λ₁=1.0, λ₂=0.4, λ₃=0.3 discovered without human bias.</div>
+    </div>
+    <div class="con-card">
+      <div class="con-icon">🌿</div>
+      <div class="con-title">Agronomically Actionable</div>
+      <div class="con-desc">Density MAE of 3.1% (grass) and 4.7% (broadleaf) fall within the 15–30% intervention threshold margins — directly usable by variable-rate herbicide application systems without further calibration.</div>
+    </div>
+    <div class="con-card">
+      <div class="con-icon">⚡</div>
+      <div class="con-title">Edge-Aware Boundary Loss</div>
+      <div class="con-desc">Sobel-based boundary loss (λ₂) provided the single largest individual improvement to grass weed IoU — validating that explicit boundary supervision is critical for visually similar vegetation classes.</div>
+    </div>
+    <div class="con-card">
+      <div class="con-icon">📊</div>
+      <div class="con-title">Research Gap Filled</div>
+      <div class="con-desc">No prior study had combined 4-class semantic segmentation with per-class density estimation on this benchmark dataset. MT-AHNet fills this gap, enabling the full SSWM decision pipeline from a single model output.</div>
+    </div>
+  </div>
+
+  <!-- Future Work -->
+  <div style="margin-top:3rem">
+    <div style="font-family:var(--mono);font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:1rem">FUTURE DIRECTIONS</div>
+    <div class="future-list">
+      <div class="future-item">
+        <div class="future-dot"></div>
+        <div class="future-content"><strong>Cross-Regional Transfer Learning</strong> — Adapting the Brazilian soybean model to Indian and East Asian agricultural conditions using domain adaptation techniques. Different weed species, soil types, and lighting conditions require systematic adaptation.</div>
+      </div>
+      <div class="future-item">
+        <div class="future-dot"></div>
+        <div class="future-content"><strong>GPS-Integrated UAV Deployment</strong> — Coupling MT-AHNet's density maps with geo-referenced coordinates to generate GPS-tagged weed density heatmaps directly compatible with variable-rate application controllers.</div>
+      </div>
+      <div class="future-item">
+        <div class="future-dot"></div>
+        <div class="future-content"><strong>Edge Computing / Model Compression</strong> — Knowledge distillation or quantization to create lightweight versions deployable on agricultural drone hardware in real-time without cloud connectivity.</div>
+      </div>
+      <div class="future-item">
+        <div class="future-dot"></div>
+        <div class="future-content"><strong>Instance-Level Detection + Multi-Temporal Monitoring</strong> — Extending from semantic to instance segmentation, and incorporating temporal sequences to track weed growth dynamics across the crop season.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="team" style="font-family:var(--display);font-size:1rem;color:var(--green);margin-bottom:.5rem">
+    Krishnapriya V Nair · Dharun Prakash · Tejaswi Ponukupati · K S Archana
+  </div>
+  <div>Dept. of Data Science and Business Systems — SRMIST Kattankulathur</div>
+  <div style="margin-top:.5rem">21CSP302L Minor Research Project · MT-AHNet © 2025</div>
+  <div style="margin-top:.5rem;color:rgba(107,122,107,0.5)">Dataset: Ferreira et al. [3] via Kaggle fpeccia/weed-detection-in-soybean-crops</div>
+</footer>
+
+<script>
+  // Animate bars on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, {threshold: 0.1});
+
+  document.querySelectorAll('.why-card, .method-card, .eco-card, .con-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
